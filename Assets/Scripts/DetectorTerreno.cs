@@ -11,24 +11,91 @@ public class DetectorTerreno : MonoBehaviour
     public LayerMask capaFriccion;
     public LayerMask capaAgua;
     
-    private bool enAgua = false;
-    private bool enFriccion = false;
+    [Header("Estado Actual (Solo Lectura)")]
+    public bool enAgua = false;
+    public bool enFriccion = false;
+    public bool conejosPuedenCruzar = false;
+    
     private float factorFriccionActual = 1f;
+    private TextMesh textoDebug;
+
+    void Start()
+    {
+        CrearTextoDebug();
+    }
 
     void Update()
     {
         DetectarTerreno();
         ActualizarVelocidad();
+        ActualizarTextoDebug();
+    }
+
+    void CrearTextoDebug()
+    {
+        // Crear objeto para texto debug
+        GameObject textoObj = new GameObject("DebugText");
+        textoObj.transform.SetParent(transform);
+        textoObj.transform.localPosition = new Vector3(0, 0.8f, 0);
+        
+        textoDebug = textoObj.AddComponent<TextMesh>();
+        textoDebug.characterSize = 0.1f;
+        textoDebug.fontSize = 20;
+        textoDebug.alignment = TextAlignment.Center;
+        textoDebug.anchor = TextAnchor.MiddleCenter;
+        textoDebug.color = Color.black;
+    }
+
+    void ActualizarTextoDebug()
+    {
+        if (textoDebug != null)
+        {
+            string estado = "Normal";
+            Color color = Color.green;
+
+            if (enAgua)
+            {
+                estado = "AGUA";
+                color = Color.blue;
+                if (!conejosPuedenCruzar && gameObject.CompareTag("Bunny"))
+                {
+                    estado = "BLOQUEADO";
+                    color = Color.red;
+                }
+            }
+            else if (enFriccion)
+            {
+                estado = $"LENTO ({factorFriccionActual:F1}x)";
+                color = Color.yellow;
+            }
+
+            textoDebug.text = $"{estado}\nVel: {velocidadActual:F1}";
+            textoDebug.color = color;
+        }
     }
 
     void DetectarTerreno()
     {
-        // Detectar si está en agua
+        // Detectar agua
         Collider2D hitAgua = Physics2D.OverlapCircle(transform.position, radioDeteccion, capaAgua);
         bool estabaEnAgua = enAgua;
         enAgua = hitAgua != null;
 
-        // Detectar si está en zona de fricción
+        if (hitAgua != null)
+        {
+            CuerpoAgua cuerpoAgua = hitAgua.GetComponent<CuerpoAgua>();
+            if (cuerpoAgua != null)
+            {
+                conejosPuedenCruzar = cuerpoAgua.conejosPuedenCruzar;
+                
+                if (enAgua && !estabaEnAgua && gameObject.CompareTag("Bunny") && !cuerpoAgua.conejosPuedenCruzar)
+                {
+                    CambiarDireccionLejosDeAgua(hitAgua.transform.position);
+                }
+            }
+        }
+
+        // Detectar fricción
         Collider2D hitFriccion = Physics2D.OverlapCircle(transform.position, radioDeteccion, capaFriccion);
         enFriccion = hitFriccion != null;
         
@@ -44,59 +111,37 @@ public class DetectorTerreno : MonoBehaviour
         {
             factorFriccionActual = 1f;
         }
-
-        // Si acaba de entrar al agua y es conejo, cambiar dirección
-        if (enAgua && !estabaEnAgua && gameObject.CompareTag("Bunny"))
-        {
-            CuerpoAgua cuerpoAgua = hitAgua.GetComponent<CuerpoAgua>();
-            if (cuerpoAgua != null && !cuerpoAgua.conejosPuedenCruzar)
-            {
-                CambiarDireccionLejosDeAgua(hitAgua.transform.position);
-            }
-        }
     }
 
     void ActualizarVelocidad()
     {
-        if (enAgua)
+        if (enAgua && gameObject.CompareTag("Bunny") && !conejosPuedenCruzar)
+        {
+            velocidadActual = 0f;
+            return;
+        }
+        else if (enAgua && gameObject.CompareTag("Predator"))
         {
             Collider2D hitAgua = Physics2D.OverlapCircle(transform.position, radioDeteccion, capaAgua);
             if (hitAgua != null)
             {
                 CuerpoAgua cuerpoAgua = hitAgua.GetComponent<CuerpoAgua>();
-                if (cuerpoAgua != null)
+                if (cuerpoAgua != null && cuerpoAgua.depredadoresPuedenCruzar)
                 {
-                    if (gameObject.CompareTag("Bunny") && !cuerpoAgua.conejosPuedenCruzar)
-                    {
-                        velocidadActual = 0f; // Bloquear completamente
-                        return;
-                    }
-                    else if (gameObject.CompareTag("Predator") && cuerpoAgua.depredadoresPuedenCruzar)
-                    {
-                        velocidadActual = velocidadNormal * cuerpoAgua.factorVelocidadDepredadores;
-                        return;
-                    }
+                    velocidadActual = velocidadNormal * cuerpoAgua.factorVelocidadDepredadores;
+                    return;
                 }
             }
         }
 
-        if (enFriccion)
-        {
-            velocidadActual = velocidadNormal * factorFriccionActual;
-        }
-        else
-        {
-            velocidadActual = velocidadNormal;
-        }
+        velocidadActual = enFriccion ? velocidadNormal * factorFriccionActual : velocidadNormal;
     }
 
     void CambiarDireccionLejosDeAgua(Vector3 posicionAgua)
     {
-        // Buscar componente Bunny para cambiar su destino
         Bunny bunny = GetComponent<Bunny>();
         if (bunny != null)
         {
-            // Usar reflexión para acceder al campo destination
             System.Reflection.FieldInfo field = typeof(Bunny).GetField("destination", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             

@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 4280179364882799912}
   - component: {fileID: 793088727801571113}
   - component: {fileID: 4898280201629810012}
+  - component: {fileID: 1500296800697033765}
+  - component: {fileID: -3032781275258678179}
   m_Layer: 8
   m_Name: Bunny
   m_TagString: Bunny
@@ -147,3 +149,44 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!114 &1500296800697033765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9157068989046605382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0d30405305ea444fb1a89fd905e2480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DetectorTerreno
+  velocidadNormal: 1
+  velocidadActual: 1
+  radioDeteccion: 0.3
+  capaFriccion:
+    serializedVersion: 2
+    m_Bits: 0
+  capaAgua:
+    serializedVersion: 2
+    m_Bits: 0
+  enAgua: 0
+  enFriccion: 0
+  conejosPuedenCruzar: 0
+--- !u!114 &-3032781275258678179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9157068989046605382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79a6d8bdaacbfe84195475a6151d37d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugVisual
+  mostrarEstado: 1
+  colorNormal: {r: 0, g: 1, b: 0, a: 1}
+  colorFriccion: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  colorAgua: {r: 0, g: 0, b: 1, a: 1}
+  colorBloqueado: {r: 1, g: 0, b: 0, a: 1}
